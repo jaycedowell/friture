@@ -32,6 +32,7 @@ from friture.qml_tools import qml_url, raise_if_error
 
 SMOOTH_DISPLAY_TIMER_PERIOD_MS = 25
 DEFAULT_TIMERANGE = 2 * SMOOTH_DISPLAY_TIMER_PERIOD_MS
+DEFAULT_SCALE = 1.0
 
 class Scope_Widget(QtWidgets.QWidget):
 
@@ -78,6 +79,7 @@ class Scope_Widget(QtWidgets.QWidget):
         self.settings_dialog = Scope_Settings_Dialog(self)
 
         self.set_timerange(DEFAULT_TIMERANGE)
+        self.set_scale(DEFAULT_SCALE)
 
         self.time = zeros(10)
         self.y = zeros(10)
@@ -146,11 +148,11 @@ class Scope_Widget(QtWidgets.QWidget):
         self.time = (arange(len(self.y)) - datarange // 2) / float(SAMPLING_RATE)
 
         scaled_t = (self.time * 1e3 + self.timerange/2.) / self.timerange
-        scaled_y = 1. - (self.y + 1) / 2.
+        scaled_y = (self.scale - (self.y + self.scale) / 2.) / self.scale
         self._curve.setData(scaled_t, scaled_y)
 
         if self.y2 is not None:
-            scaled_y2 = 1. - (self.y2 + 1) / 2.
+            scaled_y2 = (self.scale - (self.y2 + self.scale) / 2.) / self.scale
             self._curve_2.setData(scaled_t, scaled_y2)
 
     # method
@@ -167,6 +169,11 @@ class Scope_Widget(QtWidgets.QWidget):
     def set_timerange(self, timerange):
         self.timerange = timerange
         self._scope_data.horizontal_axis.setRange(-self.timerange/2., self.timerange/2.)
+
+    # slot
+    def set_scale(self, scale):
+        self.scale = scale
+        self._scope_data.vertical_axis.setRange(-self.scale/2., self.scale/2.)
 
     # slot
     def settings_called(self, checked):
@@ -199,16 +206,31 @@ class Scope_Settings_Dialog(QtWidgets.QDialog):
         self.doubleSpinBox_timerange.setSuffix(" ms")
 
         self.formLayout.addRow("Time range:", self.doubleSpinBox_timerange)
+        
+        self.doubleSpinBox_scale = QtWidgets.QDoubleSpinBox(self)
+        self.doubleSpinBox_scale.setDecimals(1)
+        self.doubleSpinBox_scale.setSingleStep(0.1)
+        self.doubleSpinBox_scale.setMinimum(0.1)
+        self.doubleSpinBox_scale.setMaximum(10.0)
+        self.doubleSpinBox_scale.setProperty("value", DEFAULT_SCALE)
+        self.doubleSpinBox_scale.setObjectName("doubleSpinBox_scale")
+        self.doubleSpinBox_scale.setSuffix(" ")
+
+        self.formLayout.addRow("Amplitude Scale:", self.doubleSpinBox_scale)
 
         self.setLayout(self.formLayout)
 
         self.doubleSpinBox_timerange.valueChanged.connect(self.parent().set_timerange)
+        self.doubleSpinBox_scale.valueChanged.connect(self.parent().set_scale)
 
     # method
     def saveState(self, settings):
         settings.setValue("timeRange", self.doubleSpinBox_timerange.value())
+        settings.setValue("scale", self.doubleSpinBox_scale.value())
 
     # method
     def restoreState(self, settings):
         timeRange = settings.value("timeRange", DEFAULT_TIMERANGE, type=float)
         self.doubleSpinBox_timerange.setValue(timeRange)
+        scale = settings.value("scale", DEFAULT_SCALE, type=float)
+        self.doubleSpinBox_scale.setValue(scale)
