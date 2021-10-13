@@ -54,6 +54,7 @@ install_requires = [
     "rtmixer==0.1.3",
     "docutils==0.17.1",
     "numpy==1.21.1",
+    "scipy==1.7.1",
     "PyQt5==5.15.4",
     "appdirs==1.4.4",
     "pyrr==0.10.3",
