@@ -33,6 +33,7 @@ from friture.qml_tools import qml_url, raise_if_error
 SMOOTH_DISPLAY_TIMER_PERIOD_MS = 25
 DEFAULT_TIMERANGE = 2 * SMOOTH_DISPLAY_TIMER_PERIOD_MS
 DEFAULT_SCALE = 1.0
+DEFAULT_AUTOSCALE = False
 
 class Scope_Widget(QtWidgets.QWidget):
 
@@ -80,6 +81,10 @@ class Scope_Widget(QtWidgets.QWidget):
 
         self.set_timerange(DEFAULT_TIMERANGE)
         self.set_scale(DEFAULT_SCALE)
+        self.set_autoscale(DEFAULT_AUTOSCALE)
+        self.ascale = DEFAULT_SCALE
+        self.autoscale_alpha = 0.999
+        self.autoscale_count = 0
 
         self.time = zeros(10)
         self.y = zeros(10)
@@ -148,11 +153,33 @@ class Scope_Widget(QtWidgets.QWidget):
         self.time = (arange(len(self.y)) - datarange // 2) / float(SAMPLING_RATE)
 
         scaled_t = (self.time * 1e3 + self.timerange/2.) / self.timerange
-        scaled_y = (self.scale - (self.y + self.scale) / 2.) / self.scale
+        if self.autoscale:
+            vmin = self.y.min()
+            vmax = self.y.max()
+            if self.y2 is not None:
+                vmin = min([vmin, self.y2.min()])
+                vmax = min([vmax, self.y2.max()])
+            if -vmin > vmax:
+                vmax = -vmin
+            ascale = vmax - vmin
+            self.ascale = self.autoscale_alpha*self.ascale + (1-self.autoscale_alpha)*ascale
+            
+            if self.autoscale_count == 0:
+                self._scope_data.vertical_axis.setRange(-self.ascale/2., self.ascale/2.)
+            self.autoscale_count += 1
+            if self.autoscale_count > 49:
+                self.autoscale_count = 0
+                
+            scaled_y = (self.ascale - (self.y + self.ascale) / 2.) / self.ascale
+            if self.y2 is not None:
+                scaled_y2 = (self.ascale - (self.y2 + self.ascale) / 2.) / self.ascale
+        else:
+            scaled_y = (self.scale - (self.y + self.scale) / 2.) / self.scale
+            if self.y2 is not None:
+                scaled_y2 = (self.scale - (self.y2 + self.scale) / 2.) / self.scale
+                
         self._curve.setData(scaled_t, scaled_y)
-
         if self.y2 is not None:
-            scaled_y2 = (self.scale - (self.y2 + self.scale) / 2.) / self.scale
             self._curve_2.setData(scaled_t, scaled_y2)
 
     # method
@@ -173,7 +200,15 @@ class Scope_Widget(QtWidgets.QWidget):
     # slot
     def set_scale(self, scale):
         self.scale = scale
+        self.ascale = scale
         self._scope_data.vertical_axis.setRange(-self.scale/2., self.scale/2.)
+
+    #slot
+    def set_autoscale(self, autoscale):
+        self.autoscale = autoscale
+        self.autoscale_count = 0
+        if not self.autoscale:
+            self.set_scale(self.scale)
 
     # slot
     def settings_called(self, checked):
@@ -217,16 +252,27 @@ class Scope_Settings_Dialog(QtWidgets.QDialog):
         self.doubleSpinBox_scale.setSuffix(" ")
 
         self.formLayout.addRow("Amplitude Scale:", self.doubleSpinBox_scale)
+        
+        self.radioButton_autoscale = QtWidgets.QRadioButton(self)
+        
+        self.formLayout.addRow("Auto-Scale:", self.radioButton_autoscale)
 
         self.setLayout(self.formLayout)
 
         self.doubleSpinBox_timerange.valueChanged.connect(self.parent().set_timerange)
         self.doubleSpinBox_scale.valueChanged.connect(self.parent().set_scale)
+        self.radioButton_autoscale.toggled.connect(self.parent().set_autoscale)
+        self.radioButton_autoscale.toggled.connect(self.toggle_scale)
 
+    # slot
+    def toggle_scale(self, autoscale):
+        self.doubleSpinBox_scale.setEnabled(not autoscale)
+        
     # method
     def saveState(self, settings):
         settings.setValue("timeRange", self.doubleSpinBox_timerange.value())
         settings.setValue("scale", self.doubleSpinBox_scale.value())
+        settings.setValue("autoscale", self.radioButton_autoscale.isChecked())
 
     # method
     def restoreState(self, settings):
@@ -234,3 +280,5 @@ class Scope_Settings_Dialog(QtWidgets.QDialog):
         self.doubleSpinBox_timerange.setValue(timeRange)
         scale = settings.value("scale", DEFAULT_SCALE, type=float)
         self.doubleSpinBox_scale.setValue(scale)
+        autoscale = settings.value("autoscale", DEFAULT_AUTOSCALE, type=bool)
+        self.radioButton_autoscale.setChecked(autoscale)
