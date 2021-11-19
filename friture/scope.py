@@ -36,7 +36,6 @@ DEFAULT_SCALE = 1.0
 DEFAULT_AUTOSCALE = False
 
 #
-#
 # These three variables control how the auto-scaling is implemented
 #
 
