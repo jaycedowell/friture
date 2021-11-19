@@ -35,6 +35,10 @@ DEFAULT_TIMERANGE = 2 * SMOOTH_DISPLAY_TIMER_PERIOD_MS
 DEFAULT_SCALE = 1.0
 DEFAULT_AUTOSCALE = False
 
+AUTOSCALE_ALPHA = 0.995
+AUTOSCALE_MIN_SCALE = 0.015
+AUTOSCALE_JUMP_FACTOR = 3
+
 class Scope_Widget(QtWidgets.QWidget):
 
     def __init__(self, parent, engine):
@@ -83,7 +87,6 @@ class Scope_Widget(QtWidgets.QWidget):
         self.set_scale(DEFAULT_SCALE)
         self.set_autoscale(DEFAULT_AUTOSCALE)
         self.ascale = DEFAULT_SCALE
-        self.autoscale_alpha = 0.999
         self.autoscale_count = 0
 
         self.time = zeros(10)
@@ -162,8 +165,11 @@ class Scope_Widget(QtWidgets.QWidget):
             if -vmin > vmax:
                 vmax = -vmin
             ascale = vmax - vmin
-            self.ascale = self.autoscale_alpha*self.ascale + (1-self.autoscale_alpha)*ascale
-            
+            self.ascale = AUTOSCALE_ALPHA*self.ascale + (1-AUTOSCALE_ALPHA)*ascale
+            self.ascale = max([self.ascale, AUTOSCALE_MIN_SCALE])
+            if ascale > AUTOSCALE_JUMP_FACTOR*self.ascale:
+                self.ascale = ascale
+                
             if self.autoscale_count == 0:
                 self._scope_data.vertical_axis.setRange(-self.ascale/2., self.ascale/2.)
             self.autoscale_count += 1
