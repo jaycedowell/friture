@@ -35,8 +35,26 @@ DEFAULT_TIMERANGE = 2 * SMOOTH_DISPLAY_TIMER_PERIOD_MS
 DEFAULT_SCALE = 1.0
 DEFAULT_AUTOSCALE = False
 
+#
+#
+# These three variables control how the auto-scaling is implemented
+#
+
+# Sets how fast the auto-scaling responds to changes in the input intensity.
+# Valid values are [0,1] with 0 representing do not actually auto scale and
+# 1 always use the most recent auto-scale amplitude.  Values in between
+# represent a weighted average between the current amplitude and the previous
+# amplitude.
 AUTOSCALE_ALPHA = 0.995
+
+# Minimum amplitude scale to set.  This is useful for making sure the amplitude
+# does not actually hit zero.
 AUTOSCALE_MIN_SCALE = 0.015
+
+# The jump factor controls how the auto-scale amplitude responds to a sudden
+# increase in the intensity.  If the current amplitude is greater than
+# AUTOSCALE_JUMP_FACTOR times the previous amplitude, then the current amplitude
+# is used instead of the weighted average.
 AUTOSCALE_JUMP_FACTOR = 3
 
 class Scope_Widget(QtWidgets.QWidget):
