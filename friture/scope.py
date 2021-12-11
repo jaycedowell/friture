@@ -32,7 +32,7 @@ from friture.qml_tools import qml_url, raise_if_error
 
 SMOOTH_DISPLAY_TIMER_PERIOD_MS = 25
 DEFAULT_TIMERANGE = 2 * SMOOTH_DISPLAY_TIMER_PERIOD_MS
-DEFAULT_SCALE = 1.0
+DEFAULT_SCALE = 1000.0
 DEFAULT_AUTOSCALE = False
 
 #
@@ -48,7 +48,7 @@ AUTOSCALE_ALPHA = 0.995
 
 # Minimum amplitude scale to set.  This is useful for making sure the amplitude
 # does not actually hit zero.
-AUTOSCALE_MIN_SCALE = 0.015
+AUTOSCALE_MIN_SCALE = 15.0
 
 # The jump factor controls how the auto-scale amplitude responds to a sudden
 # increase in the intensity.  If the current amplitude is greater than
@@ -77,7 +77,7 @@ class Scope_Widget(QtWidgets.QWidget):
         self._curve_2 = Curve()
         self._curve_2.name = "Ch2"
 
-        self._scope_data.vertical_axis.name = "Signal"
+        self._scope_data.vertical_axis.name = "Signal (mV)"
         self._scope_data.vertical_axis.setTrackerFormatter(lambda x: "%#.3g" % (x))
         self._scope_data.horizontal_axis.name = "Time (ms)"
         self._scope_data.horizontal_axis.setTrackerFormatter(lambda x: "%#.3g ms" % (x))
@@ -155,9 +155,9 @@ class Scope_Widget(QtWidgets.QWidget):
         datarange = width
         floatdata = floatdata[:, shift - datarange // 2: shift + datarange // 2]
 
-        self.y = floatdata[0, :]
+        self.y = floatdata[0, :]*1000
         if twoChannels:
-            self.y2 = floatdata[1, :]
+            self.y2 = floatdata[1, :]*1000
         else:
             self.y2 = None
 
@@ -218,7 +218,7 @@ class Scope_Widget(QtWidgets.QWidget):
     # slot
     def set_timerange(self, timerange):
         self.timerange = timerange
-        self._scope_data.horizontal_axis.setRange(-self.timerange/2., self.timerange/2.)
+        self._scope_data.horizontal_axis.setRange(0, self.timerange/1.)
 
     # slot
     def set_scale(self, scale):
@@ -266,10 +266,10 @@ class Scope_Settings_Dialog(QtWidgets.QDialog):
         self.formLayout.addRow("Time range:", self.doubleSpinBox_timerange)
         
         self.doubleSpinBox_scale = QtWidgets.QDoubleSpinBox(self)
-        self.doubleSpinBox_scale.setDecimals(1)
-        self.doubleSpinBox_scale.setSingleStep(0.1)
-        self.doubleSpinBox_scale.setMinimum(0.1)
-        self.doubleSpinBox_scale.setMaximum(10.0)
+        self.doubleSpinBox_scale.setDecimals(0)
+        self.doubleSpinBox_scale.setSingleStep(1.0)
+        self.doubleSpinBox_scale.setMinimum(1.0)
+        self.doubleSpinBox_scale.setMaximum(1000.0)
         self.doubleSpinBox_scale.setProperty("value", DEFAULT_SCALE)
         self.doubleSpinBox_scale.setObjectName("doubleSpinBox_scale")
         self.doubleSpinBox_scale.setSuffix(" ")
