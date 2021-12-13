@@ -28,6 +28,7 @@ DEFAULT_FFT_SIZE = 8  # 8192 points
 DEFAULT_FREQ_SCALE = 2  # Mel
 DEFAULT_MAXFREQ = 20000
 DEFAULT_MINFREQ = 20
+DEFAULT_AMP_SCALE = 1 # dB
 DEFAULT_SPEC_MIN = -100
 DEFAULT_SPEC_MAX = -20
 DEFAULT_WEIGHTING = 1  # A
@@ -89,6 +90,11 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
         self.spinBox_maxfreq.setObjectName("spinBox_maxfreq")
         self.spinBox_maxfreq.setSuffix(" Hz")
 
+        self.comboBox_ampscale = QtWidgets.QComboBox(self)
+        self.comboBox_ampscale.addItem('Linear')
+        self.comboBox_ampscale.addItem('dB')
+        self.comboBox_ampscale.setCurrentIndex(DEFAULT_AMP_SCALE)
+        
         self.spinBox_specmin = QtWidgets.QSpinBox(self)
         self.spinBox_specmin.setKeyboardTracking(False)
         self.spinBox_specmin.setMinimum(-200)
@@ -130,6 +136,7 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
         self.formLayout.addRow("Frequency scale:", self.comboBox_freqscale)
         self.formLayout.addRow("Min frequency:", self.spinBox_minfreq)
         self.formLayout.addRow("Max frequency:", self.spinBox_maxfreq)
+        self.formLayout.addRow("Amplitude scale:", self.comboBox_ampscale)
         self.formLayout.addRow("Min:", self.spinBox_specmin)
         self.formLayout.addRow("Max:", self.spinBox_specmax)
         self.formLayout.addRow("Middle-ear weighting:", self.comboBox_weighting)
@@ -143,6 +150,7 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
         self.comboBox_freqscale.currentIndexChanged.connect(self.freqscalechanged)
         self.spinBox_minfreq.valueChanged.connect(self.parent().setminfreq)
         self.spinBox_maxfreq.valueChanged.connect(self.parent().setmaxfreq)
+        self.comboBox_ampscale.currentIndexChanged.connect(self.ampscalechanged)
         self.spinBox_specmin.valueChanged.connect(self.parent().setmin)
         self.spinBox_specmax.valueChanged.connect(self.parent().setmax)
         self.comboBox_weighting.currentIndexChanged.connect(self.parent().setweighting)
@@ -169,6 +177,14 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
         self.parent().PlotZoneSpect.setfreqscale(fscales.ALL[index])
 
     # slot
+    def ampscalechanged(self, index):
+        self.logger.info("amp_scale slot %d %s", index, ['Linear', 'dB'][index])
+        self.parent().is_linear = (index == 0)
+        self.parent().setmin()
+        self.parent().setmax()
+        self.parent().setweighting()
+
+    # slot
     def responsetimechanged(self, index):
         if index == 0:
             response_time = 0.025
@@ -187,6 +203,7 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
         settings.setValue("freqScale", self.comboBox_freqscale.currentIndex())
         settings.setValue("freqMin", self.spinBox_minfreq.value())
         settings.setValue("freqMax", self.spinBox_maxfreq.value())
+        settings.setValue("ampScale", self.comboBox_ampscale.currentIndex())
         settings.setValue("Min", self.spinBox_specmin.value())
         settings.setValue("Max", self.spinBox_specmax.value())
         settings.setValue("weighting", self.comboBox_weighting.currentIndex())
@@ -203,6 +220,8 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
         self.spinBox_minfreq.setValue(freqMin)
         freqMax = settings.value("freqMax", DEFAULT_MAXFREQ, type=int)
         self.spinBox_maxfreq.setValue(freqMax)
+        ampscale = settings.value("ampScale", DEFAULT_AMP_SCALE, type=int)
+        self.comboBox_ampscale.setCurrentIndex(ampscale)
         colorMin = settings.value("Min", DEFAULT_SPEC_MIN, type=int)
         self.spinBox_specmin.setValue(colorMin)
         colorMax = settings.value("Max", DEFAULT_SPEC_MAX, type=int)

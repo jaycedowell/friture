@@ -42,6 +42,7 @@ class Spectrum_Widget(QtWidgets.QWidget):
     def __init__(self, parent, engine):
         super().__init__(parent)
 
+        self.is_linear = False
         self.audiobuffer = None
 
         self.setObjectName("Spectrum_Widget")
@@ -101,6 +102,10 @@ class Spectrum_Widget(QtWidgets.QWidget):
         epsilon = 1e-30
         return 10. * log10(sp + epsilon)
 
+    def unlog_spectrogram(self, sp):
+        epsilon = 1e-30
+        return (10**(sp/10) - epsilon)
+        
     def handle_new_data(self, floatdata):
         # we need to maintain an index of where we are in the buffer
         index = self.audiobuffer.ringbuffer.offset
@@ -151,6 +156,9 @@ class Spectrum_Widget(QtWidgets.QWidget):
 
             # the log operation and the weighting could be deffered
             # to the post-weedening !
+
+            if self.is_linear:
+                dB_spectrogram = self.unlog_spectrogram(dB_spectrogram) * 1000
 
             i = argmax(dB_spectrogram)
             fmax = self.freq[i]
@@ -224,18 +232,21 @@ class Spectrum_Widget(QtWidgets.QWidget):
         # reset kernel and parameters for the smoothing filter
         self.setresponsetime(self.response_time)
 
-    def setmin(self, value):
-        self.spec_min = value
+    def setmin(self, value=None):
+        if value is not None:
+            self.spec_min = value
         self.PlotZoneSpect.setspecrange(self.spec_min, self.spec_max)
 
-    def setmax(self, value):
-        self.spec_max = value
+    def setmax(self, value=None):
+        if value is not None:
+            self.spec_max = value
         self.PlotZoneSpect.setspecrange(self.spec_min, self.spec_max)
 
-    def setweighting(self, weighting):
-        self.weighting = weighting
-        self.PlotZoneSpect.setweighting(weighting)
-        self.update_weighting()
+    def setweighting(self, weighting=None):
+        if weighting is not None:
+            self.weighting = weighting
+            self.update_weighting()
+        self.PlotZoneSpect.setweighting(self.weighting)
 
     def update_weighting(self):
         A, B, C = self.proc.get_freq_weighting()
