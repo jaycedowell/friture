@@ -18,7 +18,7 @@
 # along with Friture.  If not, see <http://www.gnu.org/licenses/>.
 
 # version and date
-__version__ = "0.48 + PHYS1125L changes"
+__version__ = "0.48+PHYS1125L"
 __releasedate__ = "2021-09-26"
 
 __all__ = ["plotting"]
