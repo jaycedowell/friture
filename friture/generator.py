@@ -25,6 +25,9 @@ import sounddevice
 from friture.audiobackend import SAMPLING_RATE, AudioBackend
 from friture.generators.sweep import SweepGenerator
 from friture.generators.sine import SineGenerator
+from friture.generators.sawtooth import SawtoothGenerator
+from friture.generators.triangle import TriangleGenerator
+from friture.generators.square import SquareGenerator
 from friture.generators.burst import BurstGenerator
 from friture.generators.pink import PinkGenerator
 from friture.generators.white import WhiteGenerator
@@ -54,6 +57,9 @@ class Generator_Widget(QtWidgets.QWidget):
 
         self.generators = []
         self.generators.append(SineGenerator(self))
+        self.generators.append(SawtoothGenerator(self))
+        self.generators.append(TriangleGenerator(self))
+        self.generators.append(SquareGenerator(self))
         self.generators.append(WhiteGenerator(self))
         self.generators.append(PinkGenerator(self))
         self.generators.append(SweepGenerator(self))

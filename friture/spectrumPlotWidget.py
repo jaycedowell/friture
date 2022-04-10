@@ -45,6 +45,8 @@ class SpectrumPlotWidget(QtWidgets.QWidget):
 
         self._spectrum_data.show_legend = False
         self._spectrum_data.vertical_axis.name = "PSD (dB)"
+        if self.parent().is_linear:
+            self._spectrum_data.vertical_axis.name.replace("dB ", "").replace(" (dB)", "")
         self._spectrum_data.vertical_axis.setTrackerFormatter(lambda x: "%.1f dB" % (x))
         self._spectrum_data.horizontal_axis.name = "Frequency (Hz)"
         self._spectrum_data.horizontal_axis.setTrackerFormatter(lambda x: "%.0f Hz" % (x))
@@ -103,6 +105,10 @@ class SpectrumPlotWidget(QtWidgets.QWidget):
         if spec_min > spec_max:
             spec_min, spec_max = spec_max, spec_min
 
+        if self.parent().is_linear:
+            spec_min = 10**(spec_min/10) * 1000
+            spec_max = 10**(spec_max/10) * 1000
+            
         self._spectrum_data.vertical_axis.setRange(spec_min, spec_max)
         self.normVerticalScaleTransform.setRange(spec_min, spec_max)
 
@@ -115,6 +121,9 @@ class SpectrumPlotWidget(QtWidgets.QWidget):
             title = "PSD (dB B)"
         else:
             title = "PSD (dB C)"
+
+        if self.parent().is_linear:
+            title = title.replace("dB ", "").replace(" (dB)", "")
 
         self._spectrum_data.vertical_axis.name = title
 
