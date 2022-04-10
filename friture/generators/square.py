@@ -52,7 +52,7 @@ class SquareGenerator:
 
     def signal(self, t):
         self.lastt = t[-1]
-        return square(2. * np.pi * t * self.f + self.offset, width=1)
+        return square(2. * np.pi * t * self.f + self.offset)
 
 
 class SettingsWidget(QtWidgets.QWidget):
